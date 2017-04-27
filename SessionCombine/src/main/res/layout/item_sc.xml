@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout>
+
+    <com.zz.combine.view.RectFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                         xmlns:tools="http://schemas.android.com/tools"
+                                         android:layout_width="match_parent"
+                                         android:layout_height="match_parent"
+                                         android:layout_marginRight="7dp"
+                                         tools:background="#000000">
+
+        <RelativeLayout
+            android:id="@+id/sc_creating"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible">
+
+
+            <ImageView
+                android:id="@+id/tip_img"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_centerInParent="true"
+                android:src="@mipmap/sc_video_editing"/>
+
+            <TextView
+                android:id="@+id/tip_text"
+                style="@style/session_combine_tip_text"
+                android:layout_below="@id/tip_img"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="6dp"
+                android:text="@string/session_combine_creating"
+                />
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/thumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"/>
+
+        <RelativeLayout
+            android:id="@+id/sc_control"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="26dp"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/bg_gradient_sc"/>
+
+
+            <TextView
+                android:id="@+id/duration"
+                style="@style/sessionCombineCorner"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="8dp"
+                android:text="08:59"/>
+
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_alignBottom="@id/duration"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="8dp"
+                android:src="@mipmap/sc_small_video"/>
+
+
+        </RelativeLayout>
+
+
+        <com.zz.combine.view.RectProgressView
+            android:id="@+id/progress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"/>
+
+    </com.zz.combine.view.RectFrameLayout>
+</layout>

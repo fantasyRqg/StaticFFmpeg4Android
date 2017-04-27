@@ -1,0 +1,4 @@
+<resources>
+    <string name="no_session_tips">Insufficient footage to create your clip.</string>
+    <string name="session_combine_creating">Creating…</string>
+</resources>
