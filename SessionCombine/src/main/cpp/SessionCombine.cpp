@@ -89,7 +89,8 @@ typedef struct {
     uint8_t *src_data[4], *dst_data[4];
     int src_linesize[4], dst_linesize[4];
 
-    AVPixelFormat pixelFormat;
+    AVPixelFormat src_format;
+    AVPixelFormat dst_format;
     SwsContext *sws_ctx;
 
 } ScaleData;
@@ -98,7 +99,7 @@ jlong initScaler(JNIEnv *env, jclass type, jint inW, jint inH,
                  jint outW, jint outH, jstring format_) {
     const char *format = env->GetStringUTFChars(format_, 0);
 
-    AVPixelFormat pixelFormat = AV_PIX_FMT_YUV420P;
+    AVPixelFormat pixelFormat = AV_PIX_FMT_NV12;
 
     SwsContext *sws = sws_getContext(inW, inH, pixelFormat, outW, outH, pixelFormat, SWS_POINT,
                                      NULL, NULL, NULL);
@@ -117,12 +118,12 @@ jlong initScaler(JNIEnv *env, jclass type, jint inW, jint inH,
     sd->dst_w = outW;
     sd->dst_h = outH;
     sd->sws_ctx = sws;
-    sd->pixelFormat = pixelFormat;
+    sd->src_format = pixelFormat;
 
     int ret;
     /* allocate source and destination image buffers */
     if ((ret = av_image_alloc(sd->src_data, sd->src_linesize,
-                              sd->src_w, sd->src_h, sd->pixelFormat, 16)) < 0) {
+                              sd->src_w, sd->src_h, sd->src_format, 16)) < 0) {
         fprintf(stderr, "Could not allocate source image\n");
 
         return 0;
@@ -133,7 +134,7 @@ jlong initScaler(JNIEnv *env, jclass type, jint inW, jint inH,
 
     /* buffer is going to be written to rawvideo file, no alignment */
     if ((ret = av_image_alloc(sd->dst_data, sd->dst_linesize,
-                              sd->dst_w, sd->dst_h, sd->pixelFormat, 1)) < 0) {
+                              sd->dst_w, sd->dst_h, sd->src_format, 1)) < 0) {
         fprintf(stderr, "Could not allocate destination image\n");
         return 0;
     }
@@ -144,7 +145,7 @@ jlong initScaler(JNIEnv *env, jclass type, jint inW, jint inH,
     return (jlong) sd;
 }
 
-void scale(JNIEnv *env, jclass type, jlong point, jobject in,
+jint scale(JNIEnv *env, jclass type, jlong point, jobject in,
            jobject out) {
     void *inputPtr = env->GetDirectBufferAddress(in);
     void *outputPtr = env->GetDirectBufferAddress(out);
@@ -152,23 +153,26 @@ void scale(JNIEnv *env, jclass type, jlong point, jobject in,
     ScaleData *sd = (ScaleData *) point;
 
     av_image_fill_arrays(sd->src_data, sd->src_linesize, (const uint8_t *) inputPtr,
-                         sd->pixelFormat, sd->src_w, sd->src_h, 16);
+                         sd->src_format, sd->src_w, sd->src_h, 16);
+
+//    fill_yuv_image(sd->src_data,sd->src_linesize,sd.srdw)
 
     sws_scale(sd->sws_ctx, (const uint8_t *const *) sd->src_data, sd->src_linesize, 0, sd->src_h,
               sd->dst_data, sd->dst_linesize);
 
-    av_image_copy_to_buffer((uint8_t *) outputPtr, sd->dst_buffer_size,
-                            (const uint8_t *const *) sd->dst_data, sd->dst_linesize,
-                            sd->pixelFormat, sd->dst_w, sd->dst_h, 1);
+    int size = av_image_copy_to_buffer((uint8_t *) outputPtr, sd->dst_buffer_size,
+                                       (const uint8_t *const *) sd->dst_data, sd->dst_linesize,
+                                       sd->src_format, sd->dst_w, sd->dst_h, 1);
 
+    return size;
 }
 
 void releaseScaler(JNIEnv *env, jclass type, jlong point) {
 
     ScaleData *sd = (ScaleData *) point;
 
-    av_freep(&sd->src_data[0]);
-    av_freep(&sd->dst_data[0]);
+    av_free(&(sd->src_data[0]));
+    av_free(&(sd->dst_data[0]));
     sws_freeContext(sd->sws_ctx);
     delete sd;
 }
@@ -189,7 +193,7 @@ jint outputBufferSize(JNIEnv *env, jclass type, jlong point) {
 static JNINativeMethod gGLES3JniViewMethods[] = {
         {"nativeClip",       "([FIIIII)[I",                                    (void *) nativeClip},
         {"initScaler",       "(IIIILjava/lang/String;)J",                      (void *) initScaler},
-        {"scale",            "(JLjava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)V", (void *) scale},
+        {"scale",            "(JLjava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)I", (void *) scale},
         {"releaseScaler",    "(J)V",                                           (void *) releaseScaler},
         {"inputBufferSize",  "(J)I",                                           (void *) inputBufferSize},
         {"outputBufferSize", "(J)I",                                           (void *) outputBufferSize},

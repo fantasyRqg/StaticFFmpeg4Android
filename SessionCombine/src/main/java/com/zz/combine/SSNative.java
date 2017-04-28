@@ -19,7 +19,7 @@ public class SSNative {
 
     protected static native long initScaler(int inW, int inH, int outW, int outH, String format);
 
-    protected static native void scale(long point, ByteBuffer in, ByteBuffer out);
+    protected static native int scale(long point, ByteBuffer in, ByteBuffer out);
 
     protected static native void releaseScaler(long point);
 
@@ -29,19 +29,22 @@ public class SSNative {
 
 
     public static class VideoScaler {
-        private long mP;
+        private long mP = 0;
 
         public VideoScaler(int srcW, int srcH, int dstW, int dstH, String format) {
             mP = SSNative.initScaler(srcW, srcH, dstW, dstH, format);
         }
 
         public void releaseScaler() {
-            SSNative.releaseScaler(mP);
+            if (mP != 0) {
+                SSNative.releaseScaler(mP);
+                mP = 0;
+            }
         }
 
 
-        public void scale(ByteBuffer in, ByteBuffer out) {
-            SSNative.scale(mP, in, out);
+        public int scale(ByteBuffer in, ByteBuffer out) {
+            return SSNative.scale(mP, in, out);
         }
 
         public int getInputBufferSize() {
